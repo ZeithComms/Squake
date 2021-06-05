@@ -18,7 +18,7 @@ java=1.8
 certificateFingerprint=9f5e2a811a8332a842b34f6967b7db0ac4f24856
 
 # Project ID on CurseForge
-cf_project=0
+cf_project=491072
 
 # alpha, beta, release
 release_type=alpha

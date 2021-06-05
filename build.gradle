@@ -104,10 +104,10 @@ dependencies {
 jar {
     manifest {
         attributes([
-                "Specification-Title"     : "${config.mod_id}",
+                "Specification-Title"     : config.mod_id,
                 "Specification-Vendor"    : "Zeitheron",
                 "Specification-Version"   : "1",
-                "Implementation-Title"    : project.name,
+                "Implementation-Title"    : config.mod_name,
                 "Implementation-Version"  : archiveVersion,
                 "Implementation-Vendor"   : "Zeitheron",
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
@@ -120,10 +120,10 @@ task deobfJar(type: Jar) {
     classifier = 'deobf'
     from sourceSets.main.output
     manifest {
-        attributes(["Specification-Title"     : "${config.mod_id}",
+        attributes(["Specification-Title"     : config.mod_id,
                     "Specification-Vendor"    : "Zeitheron",
                     "Specification-Version"   : "1",
-                    "Implementation-Title"    : project.name,
+                    "Implementation-Title"    : config.mod_name,
                     "Implementation-Version"  : archiveVersion,
                     "Implementation-Vendor"   : "Zeitheron",
                     "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
@@ -143,7 +143,7 @@ artifacts {
 }
 
 curseforge {
-    apiKey = System.env.CURSEFORGE_API_KEY
+    apiKey = System.env.CURSEFORGE_API_KEY_COMM
     project {
         id = "${config.cf_project}"
         changelogType = 'html'
@@ -159,9 +159,6 @@ curseforge {
         }
         addArtifact(srcJar) {
             displayName = "[${config.mc_version}] ${config.mod_name} (Sources) - ${config.mod_version}"
-        }
-        relations {
-            // requiredDependency 'Hammer-Lib'
         }
     }
 }
