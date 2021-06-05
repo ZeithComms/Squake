@@ -1,0 +1,24 @@
+# Mod Info
+mod_id=squake
+archive_name=Squake
+mod_name=Squake
+mod_version=16.1.1
+
+# MC Info
+mc_version=1.16.5
+forge_version=36.1.25
+hl_version=16.1.1
+
+# MCP Info
+mcp_ch=official
+mcp_vr=1.16.5
+
+# Misc Info
+java=1.8
+certificateFingerprint=9f5e2a811a8332a842b34f6967b7db0ac4f24856
+
+# Project ID on CurseForge
+cf_project=0
+
+# alpha, beta, release
+release_type=alpha

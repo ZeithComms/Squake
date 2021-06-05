@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"minVersion": "0.8.1",
+	"package": "org.zeith.comm12.squake.mixins",
+	"refmap": "mixins.squake.refmap.json",
+	"target": "@env(DEFAULT)",
+	"compatibilityLevel": "JAVA_8",
+	"mixins": [
+		"MixinEntity",
+		"MixinPlayerEntity"
+	],
+	"client": [
+	],
+	"server": [
+	]
+}
