@@ -1,17 +1,19 @@
 package org.zeith.comm12.squake;
 
-import net.minecraft.block.BlockRenderType;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.MoverType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.particles.BlockParticleData;
-import net.minecraft.particles.ParticleTypes;
-import net.minecraft.util.math.AxisAlignedBB;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.chunk.ChunkStatus;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fml.ModList;
 
 import java.lang.reflect.Method;
@@ -42,7 +44,7 @@ public class SquakeClientPlayer
 		}
 	}
 
-	public static boolean moveEntityWithHeading(PlayerEntity player, float sidemove, float upmove, float forwardmove)
+	public static boolean moveEntityWithHeading(Player player, float sidemove, float upmove, float forwardmove)
 	{
 		if(!player.level.isClientSide)
 			return false;
@@ -50,12 +52,15 @@ public class SquakeClientPlayer
 		if(!ModConfig.isEnabled())
 			return false;
 
+		if(player.hasEffect(MobEffects.LEVITATION))
+			return false;
+
 		boolean didQuakeMovement;
 		double d0 = player.getX();
 		double d1 = player.getY();
 		double d2 = player.getZ();
 
-		if((player.abilities.flying || player.isFallFlying()) && player.getVehicle() == null)
+		if((player.getAbilities().flying || player.isFallFlying()) && player.getVehicle() == null)
 			return false;
 		else
 			didQuakeMovement = quake_moveEntityWithHeading(player, sidemove, upmove, forwardmove);
@@ -66,7 +71,7 @@ public class SquakeClientPlayer
 		return didQuakeMovement;
 	}
 
-	public static void beforeOnLivingUpdate(PlayerEntity player)
+	public static void beforeOnLivingUpdate(Player player)
 	{
 		if(!player.level.isClientSide)
 			return;
@@ -99,13 +104,13 @@ public class SquakeClientPlayer
 
 	public static boolean moveRelativeBase(Entity entity, float sidemove, float upmove, float forwardmove, float friction)
 	{
-		if(!(entity instanceof PlayerEntity))
+		if(!(entity instanceof Player))
 			return false;
 
-		return moveRelative((PlayerEntity) entity, sidemove, upmove, forwardmove, friction);
+		return moveRelative((Player) entity, sidemove, upmove, forwardmove, friction);
 	}
 
-	public static boolean moveRelative(PlayerEntity player, float sidemove, float upmove, float forwardmove, float friction)
+	public static boolean moveRelative(Player player, float sidemove, float upmove, float forwardmove, float friction)
 	{
 		if(!player.level.isClientSide)
 			return false;
@@ -113,7 +118,10 @@ public class SquakeClientPlayer
 		if(!ModConfig.isEnabled())
 			return false;
 
-		if((player.abilities.flying && player.getVehicle() == null) || player.isInWater() || player.isInLava() || player.onClimbable())
+		if(player.hasEffect(MobEffects.LEVITATION))
+			return false;
+
+		if((player.getAbilities().flying && player.getVehicle() == null) || player.isInWater() || player.isInLava() || player.onClimbable())
 		{
 			return false;
 		}
@@ -131,7 +139,7 @@ public class SquakeClientPlayer
 		return true;
 	}
 
-	public static void afterJump(PlayerEntity player)
+	public static void afterJump(Player player)
 	{
 		if(!player.level.isClientSide)
 			return;
@@ -139,15 +147,18 @@ public class SquakeClientPlayer
 		if(!ModConfig.isEnabled())
 			return;
 
+		if(player.hasEffect(MobEffects.LEVITATION))
+			return;
+
 		// undo this dumb thing
 		if(player.isSprinting())
 		{
-			float f = player.yRot * 0.017453292F;
+			float f = player.getYRot() * 0.017453292F;
 
 			double motionX = Motions.getMotionX(player), motionZ = Motions.getMotionZ(player);
 
-			motionX += MathHelper.sin(f) * 0.2F;
-			motionZ -= MathHelper.cos(f) * 0.2F;
+			motionX += Mth.sin(f) * 0.2F;
+			motionZ -= Mth.cos(f) * 0.2F;
 
 			Motions.setMotionHoriz(player, motionX, motionZ);
 		}
@@ -170,37 +181,37 @@ public class SquakeClientPlayer
 	 * =================================================
 	 */
 
-	private static double getSpeed(PlayerEntity player)
+	private static double getSpeed(Player player)
 	{
 		double motionX = Motions.getMotionX(player), motionZ = Motions.getMotionZ(player);
-		return MathHelper.sqrt(motionX * motionX + motionZ * motionZ);
+		return Math.sqrt(motionX * motionX + motionZ * motionZ);
 	}
 
-	private static float getSurfaceFriction(PlayerEntity player)
+	private static float getSurfaceFriction(Player player)
 	{
 		float f2 = 1.0F;
 
 		if(player.isOnGround())
 		{
-			BlockPos groundPos = new BlockPos(MathHelper.floor(player.getX()), MathHelper.floor(player.getBoundingBox().minY) - 1, MathHelper.floor(player.getZ()));
+			BlockPos groundPos = new BlockPos(Mth.floor(player.getX()), Mth.floor(player.getBoundingBox().minY) - 1, Mth.floor(player.getZ()));
 			f2 = 1.0F - Motions.getSlipperiness(player, groundPos);
 		}
 
 		return f2;
 	}
 
-	private static float getSlipperiness(PlayerEntity player)
+	private static float getSlipperiness(Player player)
 	{
 		float f2 = 0.91F;
 		if(player.isOnGround())
 		{
-			BlockPos groundPos = new BlockPos(MathHelper.floor(player.getX()), MathHelper.floor(player.getBoundingBox().minY) - 1, MathHelper.floor(player.getZ()));
+			BlockPos groundPos = new BlockPos(Mth.floor(player.getX()), Mth.floor(player.getBoundingBox().minY) - 1, Mth.floor(player.getZ()));
 			f2 = Motions.getSlipperiness(player, groundPos) * 0.91F;
 		}
 		return f2;
 	}
 
-	private static float minecraft_getMoveSpeed(PlayerEntity player)
+	private static float minecraft_getMoveSpeed(Player player)
 	{
 		float f2 = getSlipperiness(player);
 
@@ -209,7 +220,7 @@ public class SquakeClientPlayer
 		return player.getSpeed() * f3;
 	}
 
-	private static float[] getMovementDirection(PlayerEntity player, float sidemove, float forwardmove)
+	private static float[] getMovementDirection(Player player, float sidemove, float forwardmove)
 	{
 		float f3 = sidemove * sidemove + forwardmove * forwardmove;
 		float[] dir = {
@@ -219,7 +230,7 @@ public class SquakeClientPlayer
 
 		if(f3 >= 1.0E-4F)
 		{
-			f3 = MathHelper.sqrt(f3);
+			f3 = Mth.sqrt(f3);
 
 			if(f3 < 1.0F)
 			{
@@ -229,8 +240,8 @@ public class SquakeClientPlayer
 			f3 = 1.0F / f3;
 			sidemove *= f3;
 			forwardmove *= f3;
-			float f4 = MathHelper.sin(player.yRot * (float) Math.PI / 180.0F);
-			float f5 = MathHelper.cos(player.yRot * (float) Math.PI / 180.0F);
+			float f4 = Mth.sin(player.getYRot() * (float) Math.PI / 180.0F);
+			float f5 = Mth.cos(player.getYRot() * (float) Math.PI / 180.0F);
 			dir[0] = (sidemove * f5 - forwardmove * f4);
 			dir[1] = (forwardmove * f5 + sidemove * f4);
 		}
@@ -238,39 +249,39 @@ public class SquakeClientPlayer
 		return dir;
 	}
 
-	private static float quake_getMoveSpeed(PlayerEntity player)
+	private static float quake_getMoveSpeed(Player player)
 	{
 		float baseSpeed = player.getSpeed();
 		return !player.isShiftKeyDown() ? baseSpeed * 2.15F : baseSpeed * 1.11F;
 	}
 
-	private static float quake_getMaxMoveSpeed(PlayerEntity player)
+	private static float quake_getMaxMoveSpeed(Player player)
 	{
 		float baseSpeed = player.getSpeed();
 		return baseSpeed * 2.15F;
 	}
 
-	private static void spawnBunnyhopParticles(PlayerEntity player, int numParticles)
+	private static void spawnBunnyhopParticles(Player player, int numParticles)
 	{
 		// taken from sprint
-		int j = MathHelper.floor(player.getX());
-		int i = MathHelper.floor(player.getY() - 0.20000000298023224D - player.getMyRidingOffset());
-		int k = MathHelper.floor(player.getZ());
+		int j = Mth.floor(player.getX());
+		int i = Mth.floor(player.getY() - 0.20000000298023224D - player.getMyRidingOffset());
+		int k = Mth.floor(player.getZ());
 		BlockState blockState = player.level.getBlockState(new BlockPos(j, i, k));
 
-		Vector3d motion = player.getDeltaMovement();
+		var motion = player.getDeltaMovement();
 		Random random = player.getRandom();
 
-		if(blockState.getRenderShape() != BlockRenderType.INVISIBLE)
+		if(blockState.getRenderShape() != RenderShape.INVISIBLE)
 		{
 			for(int iParticle = 0; iParticle < numParticles; iParticle++)
 			{
-				player.level.addParticle(new BlockParticleData(ParticleTypes.BLOCK, blockState), player.getX() + (random.nextFloat() - 0.5D) * player.getBbWidth(), player.getBoundingBox().minY + 0.1D, player.getZ() + (random.nextFloat() - 0.5D) * player.getBbWidth(), -motion.x * 4.0D, 1.5D, -motion.z * 4.0D);
+				player.level.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, blockState), player.getX() + (random.nextFloat() - 0.5D) * player.getBbWidth(), player.getBoundingBox().minY + 0.1D, player.getZ() + (random.nextFloat() - 0.5D) * player.getBbWidth(), -motion.x * 4.0D, 1.5D, -motion.z * 4.0D);
 			}
 		}
 	}
 
-	private static boolean isJumping(PlayerEntity player)
+	private static boolean isJumping(Player player)
 	{
 		return player.jumping;
 	}
@@ -285,7 +296,7 @@ public class SquakeClientPlayer
 	 * =================================================
 	 */
 
-	private static void minecraft_ApplyGravity(PlayerEntity player)
+	private static void minecraft_ApplyGravity(Player player)
 	{
 		double motionY = Motions.getMotionY(player);
 
@@ -301,7 +312,8 @@ public class SquakeClientPlayer
 		} else
 		{
 			// gravity
-			motionY -= 0.08D;
+			var gravity = player.getAttribute(net.minecraftforge.common.ForgeMod.ENTITY_GRAVITY.get());
+			motionY -= gravity.getValue();
 		}
 
 		// air resistance
@@ -310,7 +322,7 @@ public class SquakeClientPlayer
 		Motions.setMotionY(player, motionY);
 	}
 
-	private static void minecraft_ApplyFriction(PlayerEntity player, float momentumRetention)
+	private static void minecraft_ApplyFriction(Player player, float momentumRetention)
 	{
 		double motionX = Motions.getMotionX(player), motionZ = Motions.getMotionZ(player);
 		motionX *= momentumRetention;
@@ -318,21 +330,21 @@ public class SquakeClientPlayer
 		Motions.setMotionHoriz(player, motionX, motionZ);
 	}
 
-	private static void minecraft_SwingLimbsBasedOnMovement(PlayerEntity player)
+	private static void minecraft_SwingLimbsBasedOnMovement(Player player)
 	{
 		player.animationSpeedOld = player.animationSpeed;
 		double d0 = player.getX() - player.xo;
 		double d1 = player.getZ() - player.zo;
-		float f6 = MathHelper.sqrt(d0 * d0 + d1 * d1) * 4.0F;
+		float f6 = Mth.sqrt((float) (d0 * d0 + d1 * d1)) * 4.0F;
 		if(f6 > 1.0F) f6 = 1.0F;
 		player.animationSpeed += (f6 - player.animationSpeed) * 0.4F;
 		player.animationPosition += player.animationSpeed;
 	}
 
-	private static void minecraft_WaterMove(PlayerEntity player, float sidemove, float upmove, float forwardmove)
+	private static void minecraft_WaterMove(Player player, float sidemove, float upmove, float forwardmove)
 	{
 		double d0 = player.getY();
-		player.moveRelative(0.04F, new Vector3d(sidemove, upmove, forwardmove));
+		player.moveRelative(0.04F, new Vec3(sidemove, upmove, forwardmove));
 
 		double motionX = Motions.getMotionX(player), motionY = Motions.getMotionY(player), motionZ = Motions.getMotionZ(player);
 
@@ -364,7 +376,7 @@ public class SquakeClientPlayer
 	/**
 	 * Moves the entity based on the specified heading.  Args: strafe, forward
 	 */
-	public static boolean quake_moveEntityWithHeading(PlayerEntity player, float sidemove, float upmove, float forwardmove)
+	public static boolean quake_moveEntityWithHeading(Player player, float sidemove, float upmove, float forwardmove)
 	{
 		// take care of ladder movement using default code
 		if(player.onClimbable())
@@ -372,10 +384,10 @@ public class SquakeClientPlayer
 			return false;
 		}
 		// take care of lava movement using default code
-		else if((player.isInLava() && !player.abilities.flying))
+		else if((player.isInLava() && !player.getAbilities().flying))
 		{
 			return false;
-		} else if(player.isInWater() && !player.abilities.flying)
+		} else if(player.isInWater() && !player.getAbilities().flying)
 		{
 			if(ModConfig.sharkingEnabled())
 				quake_WaterMove(player, sidemove, upmove, forwardmove);
@@ -432,8 +444,8 @@ public class SquakeClientPlayer
 
 				if(ModConfig.sharkingEnabled() && ModConfig.sharkingSurfTension() > 0.0D && isJumping(player) && Motions.getMotionY(player) < 0.0F)
 				{
-					AxisAlignedBB axisalignedbb = player.getBoundingBox().move(player.getDeltaMovement());
-					boolean isFallingIntoWater = player.level.containsAnyLiquid(axisalignedbb);
+					var aabb = player.getBoundingBox().move(player.getDeltaMovement());
+					boolean isFallingIntoWater = player.level.containsAnyLiquid(aabb);
 
 					if(isFallingIntoWater)
 						Motions.setMotionY(player, Motions.getMotionY(player) * ModConfig.sharkingSurfTension());
@@ -453,7 +465,7 @@ public class SquakeClientPlayer
 		return true;
 	}
 
-	private static void quake_Jump(PlayerEntity player)
+	private static void quake_Jump(Player player)
 	{
 		quake_ApplySoftCap(player, quake_getMaxMoveSpeed(player));
 
@@ -465,7 +477,7 @@ public class SquakeClientPlayer
 		}
 	}
 
-	private static boolean quake_DoTrimp(PlayerEntity player)
+	private static boolean quake_DoTrimp(Player player)
 	{
 		if(ModConfig.trimpingEnabled() && player.isShiftKeyDown())
 		{
@@ -497,13 +509,13 @@ public class SquakeClientPlayer
 		return false;
 	}
 
-	private static void quake_ApplyWaterFriction(PlayerEntity player, double friction)
+	private static void quake_ApplyWaterFriction(Player player, double friction)
 	{
 		player.setDeltaMovement(player.getDeltaMovement().scale(friction));
 	}
 
 	@SuppressWarnings("unused")
-	private static void quake_WaterAccelerate(PlayerEntity player, float wishspeed, float speed, double wishX, double wishZ, double accel)
+	private static void quake_WaterAccelerate(Player player, float wishspeed, float speed, double wishX, double wishZ, double accel)
 	{
 		float addspeed = wishspeed - speed;
 		if(addspeed > 0)
@@ -520,7 +532,7 @@ public class SquakeClientPlayer
 		}
 	}
 
-	private static void quake_WaterMove(PlayerEntity player, float sidemove, float upmove, float forwardmove)
+	private static void quake_WaterMove(Player player, float sidemove, float upmove, float forwardmove)
 	{
 		double posY = player.getY();
 
@@ -569,7 +581,7 @@ public class SquakeClientPlayer
 		}
 	}
 
-	private static void quake_Accelerate(PlayerEntity player, float wishspeed, double wishX, double wishZ, double accel)
+	private static void quake_Accelerate(Player player, float wishspeed, double wishX, double wishZ, double accel)
 	{
 		double addspeed, accelspeed, currentspeed;
 
@@ -598,7 +610,7 @@ public class SquakeClientPlayer
 		Motions.setMotionHoriz(player, motionX, motionZ);
 	}
 
-	private static void quake_AirAccelerate(PlayerEntity player, float wishspeed, double wishX, double wishZ, double accel)
+	private static void quake_AirAccelerate(Player player, float wishspeed, double wishX, double wishZ, double accel)
 	{
 		double addspeed, accelspeed, currentspeed;
 
@@ -634,7 +646,7 @@ public class SquakeClientPlayer
 	}
 
 	@SuppressWarnings("unused")
-	private static void quake_Friction(PlayerEntity player)
+	private static void quake_Friction(Player player)
 	{
 		double speed, newspeed, control;
 		float friction;
@@ -681,7 +693,7 @@ public class SquakeClientPlayer
 		Motions.setMotionHoriz(player, motionX, motionZ);
 	}
 
-	private static void quake_ApplySoftCap(PlayerEntity player, float movespeed)
+	private static void quake_ApplySoftCap(Player player, float movespeed)
 	{
 		float softCapPercent = ModConfig.softCap();
 		float softCapDegen = ModConfig.softCapDegen();
@@ -712,7 +724,7 @@ public class SquakeClientPlayer
 		}
 	}
 
-	private static void quake_ApplyHardCap(PlayerEntity player, float movespeed)
+	private static void quake_ApplyHardCap(Player player, float movespeed)
 	{
 		if(ModConfig.uncappedBunnyhopEnabled())
 			return;

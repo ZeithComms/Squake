@@ -1,10 +1,11 @@
 package org.zeith.comm12.squake.mixins;
 
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.vector.Vector3d;
-import net.minecraft.world.World;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,13 +14,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.zeith.comm12.squake.SquakeClientPlayer;
 
-@Mixin(PlayerEntity.class)
+@Mixin(Player.class)
 public abstract class MixinPlayerEntity
 		extends LivingEntity
 {
-	public MixinPlayerEntity(EntityType<? extends LivingEntity> type, World world)
+	public MixinPlayerEntity(EntityType<? extends LivingEntity> p_20966_, Level p_20967_)
 	{
-		super(type, world);
+		super(p_20966_, p_20967_);
 	}
 
 	@Inject(
@@ -27,9 +28,9 @@ public abstract class MixinPlayerEntity
 			at = @At("HEAD"),
 			cancellable = true
 	)
-	public void moveEntityWithHeading(Vector3d vec, CallbackInfo ci)
+	public void moveEntityWithHeading(Vec3 vec, CallbackInfo ci)
 	{
-		PlayerEntity asPlayer = (PlayerEntity) (LivingEntity) this;
+		var asPlayer = (Player) (LivingEntity) this;
 		if(SquakeClientPlayer.moveEntityWithHeading(asPlayer, (float) vec.x, (float) vec.y, (float) vec.z))
 			ci.cancel();
 	}
@@ -40,7 +41,7 @@ public abstract class MixinPlayerEntity
 	)
 	public void beforeOnLivingUpdate(CallbackInfo ci)
 	{
-		PlayerEntity asPlayer = (PlayerEntity) (LivingEntity) this;
+		var asPlayer = (Player) (LivingEntity) this;
 		SquakeClientPlayer.beforeOnLivingUpdate(asPlayer);
 	}
 
@@ -50,7 +51,7 @@ public abstract class MixinPlayerEntity
 	)
 	public void afterJump(CallbackInfo ci)
 	{
-		PlayerEntity asPlayer = (PlayerEntity) (LivingEntity) this;
+		var asPlayer = (Player) (LivingEntity) this;
 		SquakeClientPlayer.afterJump(asPlayer);
 	}
 
@@ -60,7 +61,7 @@ public abstract class MixinPlayerEntity
 			method = "causeFallDamage",
 			at = @At("HEAD")
 	)
-	public void beforeFall(float distance, float damageMultiplier, CallbackInfoReturnable<Boolean> cir)
+	public void beforeFall(float distance, float damageMultiplier, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir)
 	{
 		if(level.isClientSide) return;
 		wasVelocityChangedBeforeFall = hasImpulse;
@@ -70,11 +71,11 @@ public abstract class MixinPlayerEntity
 			method = "causeFallDamage",
 			at = @At("RETURN"),
 			slice = @Slice(
-					from = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;awardStat(Lnet/minecraft/util/ResourceLocation;I)V"),
+					from = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;awardStat(Lnet/minecraft/resources/ResourceLocation;I)V"),
 					to = @At("TAIL")
 			)
 	)
-	public void afterFall(float distance, float damageMultiplier, CallbackInfoReturnable<Boolean> cir)
+	public void afterFall(float distance, float damageMultiplier, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir)
 	{
 		if(level.isClientSide) return;
 		hasImpulse = wasVelocityChangedBeforeFall;

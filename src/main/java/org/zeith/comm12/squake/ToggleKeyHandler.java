@@ -1,14 +1,15 @@
 package org.zeith.comm12.squake;
 
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.I18n;
-import net.minecraft.client.settings.KeyBinding;
-import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.TextComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.ClientRegistry;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
@@ -16,7 +17,7 @@ import org.lwjgl.glfw.GLFW;
 @Mod.EventBusSubscriber(Dist.CLIENT)
 public class ToggleKeyHandler
 {
-	private static final KeyBinding TOGGLE_KEY = new KeyBinding("squake.key.toggle", GLFW.GLFW_KEY_COMMA, "key.categories.squake");
+	private static final KeyMapping TOGGLE_KEY = new KeyMapping("squake.key.toggle", GLFW.GLFW_KEY_COMMA, "key.categories.squake");
 
 	public static void setup()
 	{
@@ -31,7 +32,7 @@ public class ToggleKeyHandler
 			ModConfig.setEnabled(!ModConfig.isEnabled());
 
 			String feedback = ModConfig.isEnabled() ? I18n.get("squake.key.toggle.enabled") : I18n.get("squake.key.toggle.disabled");
-			Minecraft.getInstance().gui.getChat().addMessage(new StringTextComponent("[" + Squake.MODNAME + "] " + feedback));
+			Minecraft.getInstance().gui.getChat().addMessage(new TextComponent("[").append(new TextComponent("Squake").withStyle(ChatFormatting.GOLD)).append("] ").append(feedback));
 		}
 	}
 }

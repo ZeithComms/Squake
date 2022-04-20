@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[36,)"
+loaderVersion="[40,)"
 issueTrackerURL="https://github.com/ZeithComms/Squake/issues"
 license="All rights reserved"
 [[mods]]
@@ -17,12 +17,12 @@ A Quake-style movement mod for Minecraft
 [[dependencies.squake]]
     modId="forge"
     mandatory=true
-    versionRange="[36,)"
+    versionRange="[40,)"
     ordering="NONE" # NONE/BEFORE/AFTER
     side="BOTH"
 [[dependencies.squake]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.16.5]"
+    versionRange="[1.18.2]"
     ordering="NONE"
     side="BOTH"

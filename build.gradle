@@ -10,9 +10,9 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '4.1.+', changing: true
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
         classpath "gradle.plugin.com.matthewprenger:CurseGradle:1.4.0"
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+        classpath 'org.spongepowered:mixingradle:0.7.+'
     }
 }
 
@@ -22,25 +22,30 @@ apply plugin: 'maven-publish'
 apply plugin: "com.matthewprenger.cursegradle"
 apply plugin: 'org.spongepowered.mixin'
 
-ext.configFile = file "build.txt"
-
+ext.configFile = file("build.txt")
 configFile.withReader {
     def prop = new Properties()
     prop.load(it)
-    project.ext.config = new ConfigSlurper().parse prop
+    project.ext.config = new ConfigSlurper().parse(prop)
+    project.ext.hasConfig = { key ->
+        return config.isSet(key);
+    }
 }
 
 version = config.mod_version
-group = "tk.zeitheron.${config.mod_id}"
+group = config.maven_group
 archivesBaseName = "${config.archive_name}-${config.mc_version}"
 
-sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = config.java
+mixin {
+    add sourceSets.main, "mixins.${config.mod_id}.refmap.json"
+    config "mixins.${config.mod_id}.json"
 
-sourceSets {
-    main {
-        ext.refMap = "mixins.${config.mod_id}.refmap.json"
-    }
+    debug.verbose = true
+    debug.export = true
 }
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
 
 minecraft {
     mappings channel: config.mcp_ch, version: config.mcp_vr
@@ -49,7 +54,7 @@ minecraft {
         client {
             workingDirectory project.file('run/client')
             property 'forge.logging.console.level', 'debug'
-            setArgs(Arrays.asList("--mixin mixins.${config.mod_id}.json -Dmixin.env.disableRefMap=true".split(' ')))
+            setArgs(Arrays.asList("--mixin mixins.${config.mod_id}.json".split(' ')))
             mods {
                 examplemod {
                     source sourceSets.main
@@ -60,7 +65,7 @@ minecraft {
         server {
             workingDirectory project.file('run/server')
             property 'forge.logging.console.level', 'debug'
-            setArgs(Arrays.asList("--mixin mixins.${config.mod_id}.json -Dmixin.env.disableRefMap=true".split(' ')))
+            setArgs(Arrays.asList("--mixin mixins.${config.mod_id}.json".split(' ')))
             mods {
                 examplemod {
                     source sourceSets.main
@@ -72,42 +77,75 @@ minecraft {
 
 repositories {
     maven {
-        name = "DragonForge"
-        url = "https://raw.github.com/dragon-forge/maven/master"
+        name = "Zeitheron Maven"
+        url = "https://maven.zeith.org"
     }
-    flatDir {
-        dirs 'runtimeMods'
-    }
+    maven { setUrl("https://oss.sonatype.org/content/repositories/public/") }
+    flatDir { dirs 'libraries/all' }
+    flatDir { dirs 'libraries/classpathOnly' }
+    flatDir { dirs 'libraries/runtimeOnly' }
 }
+
+import net.minecraftforge.gradle.common.tasks.SignJar
 
 dependencies {
     minecraft "net.minecraftforge:forge:${config.mc_version}-${config.forge_version}"
 
-    annotationProcessor("org.spongepowered:mixin:0.8.2:processor")
+    annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
 
-    if (file("runtimeMods").isDirectory()) {
-        file("runtimeMods").eachFile { file ->
+    def libraries = file("libraries");
+    if (!libraries.isDirectory()) libraries.mkdirs()
+
+    def libDir = new File(libraries, "all");
+    if (libDir.isDirectory()) {
+        libDir.eachFile { file ->
             def splitPos = file.name.lastIndexOf("-")
             def modartifact = file.name.substring(0, splitPos)
             def modversion = file.name.substring(splitPos + 1, file.name.length() - 4)
-            def modreference = "lib:$modartifact:$modversion"
-
             dependencies {
-                implementation fg.deobf(project.dependencies.create(modreference) {
+                implementation fg.deobf(project.dependencies.create("_all:$modartifact:$modversion") {
                     transitive = false
                 })
             }
         }
-    } else file("runtimeMods").mkdir();
+    } else libDir.mkdir();
+
+    libDir = new File(libraries, "classpathOnly");
+    if (libDir.isDirectory()) {
+        libDir.eachFile { file ->
+            def splitPos = file.name.lastIndexOf("-")
+            def modartifact = file.name.substring(0, splitPos)
+            def modversion = file.name.substring(splitPos + 1, file.name.length() - 4)
+            dependencies {
+                compileClasspath fg.deobf(project.dependencies.create("_classpath:$modartifact:$modversion") {
+                    transitive = false
+                })
+            }
+        }
+    } else libDir.mkdir();
+
+    libDir = new File(libraries, "runtimeOnly");
+    if (libDir.isDirectory()) {
+        libDir.eachFile { file ->
+            def splitPos = file.name.lastIndexOf("-")
+            def modartifact = file.name.substring(0, splitPos)
+            def modversion = file.name.substring(splitPos + 1, file.name.length() - 4)
+            dependencies {
+                runtimeClasspath fg.deobf(project.dependencies.create("_runtime:$modartifact:$modversion") {
+                    transitive = false
+                })
+            }
+        }
+    } else libDir.mkdir();
 }
 
 jar {
     manifest {
         attributes([
-                "Specification-Title"     : config.mod_id,
+                "Specification-Title"     : "${config.mod_id}",
                 "Specification-Vendor"    : "Zeitheron",
                 "Specification-Version"   : "1",
-                "Implementation-Title"    : config.mod_name,
+                "Implementation-Title"    : project.name,
                 "Implementation-Version"  : archiveVersion,
                 "Implementation-Vendor"   : "Zeitheron",
                 "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
@@ -120,10 +158,10 @@ task deobfJar(type: Jar) {
     classifier = 'deobf'
     from sourceSets.main.output
     manifest {
-        attributes(["Specification-Title"     : config.mod_id,
+        attributes(["Specification-Title"     : "${config.mod_id}",
                     "Specification-Vendor"    : "Zeitheron",
                     "Specification-Version"   : "1",
-                    "Implementation-Title"    : config.mod_name,
+                    "Implementation-Title"    : project.name,
                     "Implementation-Version"  : archiveVersion,
                     "Implementation-Vendor"   : "Zeitheron",
                     "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
@@ -154,27 +192,42 @@ curseforge {
         mainArtifact(jar) {
             displayName = "[${config.mc_version}] ${config.mod_name} - ${config.mod_version}"
         }
-        addArtifact(deobfJar) {
-            displayName = "[${config.mc_version}] ${config.mod_name} (Deobfuscated) - ${config.mod_version}"
-        }
-        addArtifact(srcJar) {
-            displayName = "[${config.mc_version}] ${config.mod_name} (Sources) - ${config.mod_version}"
-        }
     }
 }
 
-def reobfFile = file("$buildDir/reobfJar/output.jar")
+task signJar(type: SignJar, dependsOn: jar) {
+    onlyIf {
+        System.env.MC_KS_PASS != null
+    }
+    keyStore = System.env.MC_KS_PATH
+    alias = System.env.MC_KS_ALIAS
+    storePass = System.env.MC_KS_PASS
+    keyPass = System.env.MC_KS_PASS
+    inputFile = jar.archiveFile
+    outputFile = jar.archiveFile
+}
+
+def reobfFile = jar.archiveFile.get().asFile
 def reobfArtifact = artifacts.add('default', reobfFile) {
     type 'jar'
-    builtBy 'reobfJar'
+    builtBy 'signJar'
 }
 
 jar.finalizedBy('reobfJar')
 publish.dependsOn('reobfJar')
 
+build.dependsOn signJar
+
+afterEvaluate {
+    tasks["curseforge${config.cf_project}"].dependsOn.add(publish)
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            groupId = config.maven_group
+            artifactId = config.archive_name + "-" + config.mc_version
+
             artifact reobfArtifact
             artifact srcJar
             artifact deobfJar
@@ -182,7 +235,7 @@ publishing {
     }
     repositories {
         maven {
-            url "file:///${project.projectDir}/mcmodsrepo"
+            url "file:///SERVER//Maven"
         }
     }
 }

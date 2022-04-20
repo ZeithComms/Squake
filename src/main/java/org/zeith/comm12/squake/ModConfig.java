@@ -2,6 +2,7 @@ package org.zeith.comm12.squake;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
 import org.apache.commons.lang3.tuple.Pair;
 
 public class ModConfig
@@ -181,7 +182,7 @@ public class ModConfig
 	}
 
 	@SubscribeEvent
-	public static void onLoad(final net.minecraftforge.fml.config.ModConfig.Loading configEvent)
+	public static void onLoad(final ModConfigEvent.Loading configEvent)
 	{
 		Squake.LOGGER.debug("Loaded squake config file {}", configEvent.getConfig().getFileName());
 	}

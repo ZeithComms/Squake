@@ -35,6 +35,8 @@ public class Squake
 	public void clientSetup(FMLClientSetupEvent e)
 	{
 		ToggleKeyHandler.setup();
-//		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY, () -> (mc, parent) -> parent);
+
+		// no config gui screen here.
+//		ModLoadingContext.get().registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class, () -> new ConfigGuiHandler.ConfigGuiFactory((mc, parent) -> parent));
 	}
 }
