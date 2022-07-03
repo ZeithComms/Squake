@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[40,)"
+loaderVersion="[41,)"
 issueTrackerURL="https://github.com/ZeithComms/Squake/issues"
 license="All rights reserved"
 [[mods]]
@@ -8,7 +8,6 @@ version="${file.jarVersion}"
 displayName="Squake"
 updateJSONURL="http://dccg.herokuapp.com/api/fmluc/491072"
 displayURL="http://dccg.herokuapp.com/api/fmlhp/491072"
-logoFile="examplemod.png" #optional
 credits="squeek502 for the original 1.12.2 (and below) mod!" #optional
 authors="Zeitheron" #optional
 description='''
@@ -17,12 +16,12 @@ A Quake-style movement mod for Minecraft
 [[dependencies.squake]]
     modId="forge"
     mandatory=true
-    versionRange="[40,)"
+    versionRange="[41,)"
     ordering="NONE" # NONE/BEFORE/AFTER
     side="BOTH"
 [[dependencies.squake]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.18.2]"
+    versionRange="[1.19,]"
     ordering="NONE"
     side="BOTH"

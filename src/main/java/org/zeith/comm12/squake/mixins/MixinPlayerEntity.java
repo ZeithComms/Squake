@@ -12,17 +12,19 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.zeith.comm12.squake.ISquakeEntity;
 import org.zeith.comm12.squake.SquakeClientPlayer;
 
 @Mixin(Player.class)
 public abstract class MixinPlayerEntity
 		extends LivingEntity
+		implements ISquakeEntity
 {
 	public MixinPlayerEntity(EntityType<? extends LivingEntity> p_20966_, Level p_20967_)
 	{
 		super(p_20966_, p_20967_);
 	}
-
+	
 	@Inject(
 			method = "travel",
 			at = @At("HEAD"),
@@ -31,10 +33,10 @@ public abstract class MixinPlayerEntity
 	public void moveEntityWithHeading(Vec3 vec, CallbackInfo ci)
 	{
 		var asPlayer = (Player) (LivingEntity) this;
-		if(SquakeClientPlayer.moveEntityWithHeading(asPlayer, (float) vec.x, (float) vec.y, (float) vec.z))
+		if(SquakeClientPlayer.moveEntityWithHeading(asPlayer, this, (float) vec.x, (float) vec.y, (float) vec.z))
 			ci.cancel();
 	}
-
+	
 	@Inject(
 			method = "tick",
 			at = @At("HEAD")
@@ -44,7 +46,7 @@ public abstract class MixinPlayerEntity
 		var asPlayer = (Player) (LivingEntity) this;
 		SquakeClientPlayer.beforeOnLivingUpdate(asPlayer);
 	}
-
+	
 	@Inject(
 			method = "jumpFromGround",
 			at = @At("TAIL")
@@ -54,9 +56,9 @@ public abstract class MixinPlayerEntity
 		var asPlayer = (Player) (LivingEntity) this;
 		SquakeClientPlayer.afterJump(asPlayer);
 	}
-
+	
 	private boolean wasVelocityChangedBeforeFall = false;
-
+	
 	@Inject(
 			method = "causeFallDamage",
 			at = @At("HEAD")
@@ -66,7 +68,7 @@ public abstract class MixinPlayerEntity
 		if(level.isClientSide) return;
 		wasVelocityChangedBeforeFall = hasImpulse;
 	}
-
+	
 	@Inject(
 			method = "causeFallDamage",
 			at = @At("RETURN"),

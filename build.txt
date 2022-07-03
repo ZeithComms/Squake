@@ -2,21 +2,21 @@
 mod_id=squake
 archive_name=Squake
 mod_name=Squake
-mod_version=18.1.1
+mod_version=19.1.1
 
 # Maven Info
 maven_group=org.zeith.comms.c12squake
 
 # MC Info
-mc_version=1.18.2
-forge_version=40.1.0
+mc_version=1.19
+forge_version=41.0.63
 
 # MCP Info
 mcp_ch=official
-mcp_vr=1.18.2
+mcp_vr=1.19
 
 # Misc Info
-java=1.8
+java=17
 certificateFingerprint=9f5e2a811a8332a842b34f6967b7db0ac4f24856
 
 # Project ID on CurseForge
