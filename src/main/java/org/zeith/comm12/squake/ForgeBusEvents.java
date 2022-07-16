@@ -11,7 +11,7 @@ public class ForgeBusEvents
 	@SubscribeEvent
 	public static void onLivingFall(LivingFallEvent event)
 	{
-		if(!(event.getEntityLiving() instanceof Player))
+		if(!(event.getEntity() instanceof Player))
 			return;
 
 		if(ModConfig.increasedFallDistance() != 0.0D)

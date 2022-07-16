@@ -8,25 +8,28 @@ import net.minecraft.network.chat.contents.LiteralContents;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.ClientRegistry;
+import net.minecraftforge.client.ForgeHooksClient;
 import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.common.MinecraftForge;
 import org.lwjgl.glfw.GLFW;
 
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(Dist.CLIENT)
 public class ToggleKeyHandler
 {
 	private static final KeyMapping TOGGLE_KEY = new KeyMapping("squake.key.toggle", GLFW.GLFW_KEY_COMMA, "key.categories.squake");
 	
 	public static void setup()
 	{
-		ClientRegistry.registerKeyBinding(TOGGLE_KEY);
+		MinecraftForge.EVENT_BUS.addListener(ToggleKeyHandler::onKeyEvent);
 	}
 	
-	@SubscribeEvent
-	public static void onKeyEvent(InputEvent.KeyInputEvent event)
+	public static void registerKeys(RegisterKeyMappingsEvent evt)
+	{
+		evt.register(TOGGLE_KEY);
+	}
+	
+	private static void onKeyEvent(InputEvent.Key event)
 	{
 		if(TOGGLE_KEY.consumeClick())
 		{
