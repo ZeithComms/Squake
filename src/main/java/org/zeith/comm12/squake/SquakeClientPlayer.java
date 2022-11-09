@@ -300,7 +300,7 @@ public class SquakeClientPlayer
 	{
 		double motionY = Motions.getMotionY(player);
 
-		if(player.level.isClientSide && (!player.level.isLoaded(new BlockPos((int) player.getX(), (int) player.getY(), (int) player.getZ())) || player.level.getChunk(new BlockPos((int) player.getX(), (int) player.getY(), (int) player.getZ())).getStatus() != ChunkStatus.FULL))
+		if(player.level.isClientSide && (player.level.getChunk(new BlockPos((int) player.getX(), (int) player.getY(), (int) player.getZ())).getStatus() != ChunkStatus.FULL))
 		{
 			if(player.getY() > 0.0D)
 			{
